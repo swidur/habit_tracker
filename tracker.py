@@ -2,9 +2,14 @@ import psycopg2
 import datetime
 from prettytable import PrettyTable
 
+
+def connection():
+    return psycopg2.connect("dbname='habit_tracker' user='postgres' host='localhost' password='XXX'")
+
+
 def get_activ_names():
     """Return all activities in dec order by hrs."""
-    db = psycopg2.connect("dbname='habit_tracker' user='postgres' host='localhost' password='XXX'")
+    db = connection()
     c = db.cursor()
     c.execute("select distinct activ,duration,id  from loger order by duration desc;")
     rows = c.fetchall()
@@ -13,7 +18,8 @@ def get_activ_names():
         names = row[0]
         hours = row[1]
         ids = row[2]
-        tab.add_row([hours,names,ids])
+        tab.add_row([hours, names, ids])
+
     print tab
     db.close()
 
@@ -21,7 +27,7 @@ def get_activ_names():
 def add_activ(activity, duration):
     """add new activity"""
 
-    db = psycopg2.connect("dbname='habit_tracker' user='postgres' host='localhost' password='XXX'")
+    db = connection()
     c = db.cursor()
     c.execute("insert into loger values ('{0}',{1},current_timestamp);".format(activity, duration))
     db.commit()
@@ -30,14 +36,14 @@ def add_activ(activity, duration):
 
 def rmv_activ(act_id):
     """remove activity"""
-    db = psycopg2.connect("dbname='habit_tracker' user='postgres' host='localhost' password='XXX'")
+    db = connection()
     c = db.cursor()
     c.execute('select activ, duration, id from loger where id ={}'.format(act_id))
-    deleted = []
-    deleted = [i for i in c.fetchone()]
-    c.execute("delete from loger where id={};".format(act_id))
-    print ('Deletion successful!  Activity: "{}", hours: {}, ID: {}.'.format(deleted[0],deleted[1],deleted[2]))
-
+    deleted = [i for i in c.fetchall()]
+    if deleted:
+        c.execute("delete from loger where id={};".format(act_id))
+        print ('Deletion successful!  Activity: "{}", hours: {}, ID: {}.'.format(deleted[0], deleted[1], deleted[2]))
+    else:
+        print '\nNo such ID in DB!'
     db.commit()
     db.close()
-

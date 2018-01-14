@@ -40,7 +40,7 @@ def main():
 
         elif ask == 3:
             tracker.get_activ_names()
-            user_inpt4 = raw_input('Which activity would you like to delete? [num]')
+            user_inpt4 = raw_input('Which activity would you like to delete? [ID] ')
             try:
                 rmv = int(user_inpt4)
             except (TypeError, ValueError):
