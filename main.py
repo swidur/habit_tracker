@@ -1,12 +1,25 @@
 import activities
 import activity
+import sqlite3 as lite
 
 print('Welcome to habit tracker! What would you like to do? ')
 
+con = None
+try:
+    con = lite.connect('local.db')
+    cur = con.cursor()
+    cur.execute(
+        'CREATE TABLE IF NOT EXISTS loger (act TEXT NOT NULL, duration INTEGER NOT NULL,date DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,act_id INTEGER PRIMARY KEY);')
+
+
+except lite.Error, e:
+
+    print "Error %s:" % e.args[0]
+
 actv = activities.Activities()
 
-def main():
 
+def main():
     while True:
         print('\nShow current habits [1]\nAdd new habit [2]\nDelete habit [3] \nExit [4] ')
         user_inpt1 = raw_input()
@@ -34,7 +47,7 @@ def main():
                 print('Expected number, got {}'.format(type(user_inpt3)))
 
             try:
-                actv.add_act(activity.Activity(act_name,duration))
+                actv.add_act(activity.Activity(act_name, duration))
             except UnboundLocalError:
                 pass
 
@@ -71,5 +84,6 @@ def main():
         elif ask == 4:
             actv.close_connection()
             quit()
+
 
 main()

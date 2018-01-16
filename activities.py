@@ -1,5 +1,4 @@
 from prettytable import PrettyTable
-
 from connector import Connector
 
 
@@ -39,7 +38,7 @@ class Activities:
         """add new activity"""
         db = self.connection
         c = db.cursor()
-        c.execute("insert into loger values ('{0}',{1},current_timestamp);".format(Activity.act, Activity.duration))
+        c.execute("insert into loger values ('{0}',{1},current_timestamp,NULL);".format(Activity.act, Activity.duration))
         db.commit()
 
     def del_by_id(self, act_id):
