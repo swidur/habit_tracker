@@ -18,13 +18,14 @@ class Activities:
             hours = row[1]
             act_id = row[2]
             table.add_row([hours, names, act_id])
-        print table
+        return table
 
     def get_aggregated(self):
         """Returns a PrettyTable of distinct activities, summed up duration and entries count"""
         db = self.connection
         c = db.cursor()
         c.execute("select act, sum(duration) as sum, count(act) from loger group by act order by act asc, sum asc;")
+
         rows = c.fetchall()
         tab = PrettyTable(['Name', 'Hours', 'Count'])
         for row in rows:
@@ -32,7 +33,7 @@ class Activities:
             hours = row[1]
             counts = row[2]
             tab.add_row([names, hours, counts])
-        print tab
+        return tab
 
     def add_act(self, Activity):
         """add new activity"""

@@ -31,7 +31,7 @@ def main():
             main()
 
         if ask == 1:
-            actv.get_aggregated()
+            print actv.get_aggregated()
 
         elif ask == 2:
             user_inpt2 = raw_input('What did you do? ')
@@ -61,8 +61,9 @@ def main():
                 main()
 
             if id_or_name == 1:
-                actv.get_entries()
+                print actv.get_entries()
                 user_inpt4 = raw_input('Which entry would you like to delete? [ID] ')
+                rmv = -1
                 try:
                     rmv = int(user_inpt4)
                 except (TypeError, ValueError):
@@ -70,7 +71,7 @@ def main():
                 actv.del_by_id(rmv)
 
             elif id_or_name == 2:
-                actv.get_aggregated()
+                print actv.get_aggregated()
                 user_inpt4 = raw_input('Which activity would you like to delete? [Name] ')
                 try:
                     rmv = str(user_inpt4)
