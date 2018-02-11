@@ -1,4 +1,3 @@
-from prettytable import PrettyTable
 from connector import Connector
 
 
@@ -7,33 +6,21 @@ class Activities:
         self.connection = Connector.connect()
 
     def get_entries(self):
-        """Returns a PrettyTable containing all entries ordered by act name, duration"""
+        """Returns a list containing all entries ordered by act name, duration"""
         db = self.connection
         c = db.cursor()
         c.execute("select act, duration, act_id from loger order by act asc, duration asc")
         rows = c.fetchall()
-        table = PrettyTable(['Hours', 'Name', 'ID'])
-        for row in rows:
-            names = row[0]
-            hours = row[1]
-            act_id = row[2]
-            table.add_row([hours, names, act_id])
-        return table
+        return rows
 
     def get_aggregated(self):
-        """Returns a PrettyTable of distinct activities, summed up duration and entries count"""
+        """Returns a list of distinct activities, summed up duration and entries count"""
         db = self.connection
         c = db.cursor()
-        c.execute("select act, sum(duration) as sum, count(act) from loger group by act order by act asc, sum asc;")
+        c.execute("select act, sum(duration) as sum, count(act) from loger group by act order by sum desc, act asc;")
 
         rows = c.fetchall()
-        tab = PrettyTable(['Name', 'Hours', 'Count'])
-        for row in rows:
-            names = row[0]
-            hours = row[1]
-            counts = row[2]
-            tab.add_row([names, hours, counts])
-        return tab
+        return rows
 
     def add_act(self, Activity):
         """add new activity"""
