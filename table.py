@@ -15,20 +15,28 @@ class SimpleTable(object):
             current_row = []
 
             for column in range(columns):
+                if column == 0:
 
+                        label = tk.Label(self.frame,
+                                         borderwidth=1, width=6, relief=tk.SUNKEN)
+                        label.grid(row=row, column=column, ipadx=1, ipady=1)
 
-                if row == 0:
-                    label = tk.Label(self.frame, fg='black', text="%s/%s" % (row, column),
-                                     borderwidth=1, width=10,relief = tk.RIDGE)
-                    label.grid(row=row, column=column, sticky="nsew", padx=1, pady=1)
-                    label.config(font=("Arial", 9, 'bold'))
+                        current_row.append(label)
 
-                elif row > 0:
-                    label = tk.Label(self.frame, text="%s/%s" % (row, column),
-                             borderwidth=1, width=10, relief = tk.SUNKEN)
-                    label.grid(row=row, column=column, sticky="nsew", ipadx=1, ipady=1)
+                else:
 
-                current_row.append(label)
+                    if row == 0:
+                        label = tk.Label(self.frame, fg='black', text="%s/%s" % (row, column),
+                                         borderwidth=1, width=10,relief = tk.RIDGE)
+                        label.grid(row=row, column=column, sticky="nsew", padx=1, pady=1)
+                        label.config(font=("Arial", 9, 'bold'))
+
+                    elif row > 0:
+                        label = tk.Label(self.frame, text="%s/%s" % (row, column),
+                                 borderwidth=1, width=10, relief = tk.SUNKEN)
+                        label.grid(row=row, column=column, sticky="nsew", ipadx=1, ipady=1)
+
+                    current_row.append(label)
             self.frame._widgets.append(current_row)
 
         for column in range(columns):

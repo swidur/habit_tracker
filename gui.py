@@ -16,21 +16,21 @@ def notImplemented():
 
 
 def about():
-    tkMessageBox.showinfo('O programie.. ', 'Habit Tracker v0.1\n\nDawid Swidurski\ngithub.com/swidur')
+    tkMessageBox.showinfo('About.. ', 'Habit Tracker v0.1\n\nDawid Swidurski\ngithub.com/swidur')
 
 
 class addPopup(object):
     def __init__(self, master):
         self.top = self.top = Toplevel(master)
-        self.top.geometry('230x75+295+290')
+
+        self.top.geometry("+%d+%d" % (master.winfo_rootx() + 50, master.winfo_rooty() + 50))
         self.top.resizable(width=False, height=False)
         self.top.attributes("-toolwindow", 1)
         self.top.title('Add activity')
         self.top.grab_set()
 
-
         self.top.bind("<Escape>", self.close)
-
+        self.top.protocol("WM_DELETE_WINDOW", self.close)
 
         self.name_l = Label(self.top, text="Activity name: ")
         self.name_l.grid(row=0, column=0, sticky=E)
@@ -50,31 +50,29 @@ class addPopup(object):
         self.f = Frame(self.top)
         self.f.grid(row=2, columnspan=2)
 
-        self.add_button = Button(self.f, text='Add')
+        self.add_button = Button(self.f, text='Add', command= self.submit)
         self.add_button.grid(row=0, column=0, padx=1)
-        self.add_button.bind("<Button-1>", self.submit)
         self.add_button.bind("<Return>", self.submit)
 
-        self.cancel_button = Button(self.f, text='Cancel')
+        self.cancel_button = Button(self.f, text='Cancel', command= self.close)
         self.cancel_button.grid(row=0, column=1, padx=1)
-        self.cancel_button.bind("<Button-1>", self.close)
 
         # reassigned in cleanup method
         self.name = None
         self.duration = None
 
-
-    def focus_on_dur(self, event):
+    def focus_on_dur(self, *args):
         self.top.bind("<Return>", self.actv_dura.focus())
 
-    def focus_on_ok(self, event):
+    def focus_on_ok(self, *args):
         self.top.bind("<Return>", self.add_button.focus())
 
-    def submit(self, event):
+    def submit(self, *args):
         # cast entry fields variables into correct types. Display error to status bar.
         try:
             try:
-                self.duration = float(self.actv_dura.get())
+                if self.actv_dura.get() != '':
+                    self.duration = float(self.actv_dura.get())
             except (TypeError, ValueError):
                 m.stat.set('Expected number, got {} instead.'.format(type(self.actv_dura.get())))
                 raise TypeError
@@ -94,14 +92,14 @@ class addPopup(object):
 
     def send(self):
         if self.name != '' and self.duration != '':
-            m.stat.set('Added')
+            m.stat.set('Added: {}, {} hrs'.format(self.name,self.duration))
             actv.add_act(activity.Activity(self.name, self.duration))
         else:
             m.stat.set('Empty value not permitted. Aborted.')
         self.top.destroy()
         self.top.grab_release()
 
-    def close(self, event):
+    def close(self, *args):
         m.stat.set('Canceled')
         self.top.destroy()
 
@@ -110,10 +108,11 @@ class viewPopup(object):
     def __init__(self, master):
         top = self.top = Toplevel(master)
         top.minsize(height=250, width=225)
-        # top.geometry('0x0+295+290')
+        self.top.geometry("+%d+%d" % (master.winfo_rootx() + 80, master.winfo_rooty() - 20))
         top.resizable(width=False, height=1)
         top.attributes("-toolwindow", 1)
-        top.title('Add activity')
+        top.title('Activities')
+        self.top.protocol("WM_DELETE_WINDOW", self.close)
         top.grab_set()
 
         self.inst = showActiv(top)
@@ -124,8 +123,9 @@ class viewPopup(object):
         self.cancel_button = Button(self.f, text='OK', command=self.close)
         self.cancel_button.pack()
         self.cancel_button.focus()
+        self.cancel_button.bind("<Return>", self.close)
 
-    def close(self):
+    def close(self, *args):
         m.stat.set('Closed')
         self.top.destroy()
 
@@ -134,25 +134,33 @@ class delPopup(object):
     def __init__(self, master):
         top = self.top = Toplevel(master)
         top.minsize(height=250, width=225)
-        # top.geometry('0x0+295+290')
+        self.top.geometry("+%d+%d" % (master.winfo_rootx() + 80, master.winfo_rooty() - 20))
         top.resizable(width=False, height=1)
         top.attributes("-toolwindow", 1)
-        top.title('Add activity')
+        top.title('Delete activity')
+        self.top.protocol("WM_DELETE_WINDOW", self.close)
         top.grab_set()
-        top.focus()
 
         self.inst = showDel(top)
 
         self.f = Frame(top)
-        self.f.pack(fill=X)
+        self.f.pack()
 
-        self.cancel_button = Button(self.f, text='OK', command=self.close)
-        self.cancel_button.pack()
+        self.add_button = Button(self.f, text='Add', command= notImplemented)
+        self.add_button.grid(row=0, column=0, padx=1)
+
+
+        self.cancel_button = Button(self.f, text='Cancel', command= self.close)
+        self.cancel_button.grid(row=0, column=1, padx=1)
+        self.cancel_button.bind("<Return>", self.close)
+        self.cancel_button.focus()
+
+
 
         # top.bind("<Return>", self.ok)
         top.bind("<Escape>", self.close)
 
-    def close(self, event):
+    def close(self, *args):
         m.stat.set('Closed')
         self.top.destroy()
 
@@ -160,9 +168,10 @@ class delPopup(object):
 class mainWindow(object):
     def __init__(self, master):
         root.minsize(height=300, width=300)
-        root.geometry('300x300+250+200')
+        root.geometry('300x300+150+100')
         root.maxsize(height=99999999, width=300)
         master.title('Habit Tracker')
+        # master.protocol("WM_DELETE_WINDOW", root.destroy)
         self.stat = StringVar()
 
         self.main_menu = MainMenu(root)
@@ -187,14 +196,14 @@ class MainMenu:
         self.menu = Menu(master)
         master.config(menu=self.menu)
         self.file_menu = Menu(self.menu, tearoff=0)
-        self.menu.add_cascade(label='Plik', menu=self.file_menu)
-        self.file_menu.add_command(label='Otworz..', command=notImplemented)
+        self.menu.add_cascade(label='File', menu=self.file_menu)
+        self.file_menu.add_command(label='Open..', command=notImplemented)
         self.file_menu.add_separator()
-        self.file_menu.add_command(label='Zamknij', command=root.quit)
+        self.file_menu.add_command(label='Close', command=root.quit)
 
         self.help_menu = Menu(self.menu, tearoff=0)
-        self.menu.add_cascade(label='Pomoc', menu=self.help_menu)
-        self.help_menu.add_command(label='O programie..', command=about)
+        self.menu.add_cascade(label='Help', menu=self.help_menu)
+        self.help_menu.add_command(label='About..', command=about)
 
 
 class showActiv():
@@ -219,6 +228,7 @@ class showDel():
         self.master = master
         self.t = table.SimpleTable(self.master, self.length + 1, 4)
 
+        self.t.set(0, 0, '')
         self.t.set(0, 1, 'Name')
         self.t.set(0, 2, 'Time')
         self.t.set(0, 3, 'Count')
