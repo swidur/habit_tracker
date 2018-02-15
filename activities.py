@@ -5,6 +5,8 @@ class Activities:
     def __init__(self):
         self.connection = Connector.connect()
 
+        self.info = 'Nothing to report'
+
     def get_entries(self):
         """Returns a list containing all entries ordered by act name, duration"""
         db = self.connection
@@ -52,10 +54,10 @@ class Activities:
         deleted = c.fetchone()
         if deleted:
             c.execute("delete from loger where act='{}';".format(act))
-            print ('Deletion successful! Activity: "{}" deleted.'.format(deleted[0]))
+            db.commit()
+            self.info = ('Deletion successful! Activity: "{}" deleted.'.format(deleted[0]))
         else:
-            print 'No such activity in DB!'
-        db.commit()
+            self.info = 'No such activity in DB!'
 
     def close_connection(self):
         db = self.connection

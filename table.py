@@ -2,10 +2,8 @@ import Tkinter as tk
 
 
 class SimpleTable(object):
-    def __init__(self, parent, rows, columns):
-        # use black background so it "peeks through" to
-        # form grid lines
-
+    def __init__(self, parent, rows, columns, first_f_w):
+        self.first_f_w = first_f_w
         self.frame = tk.Frame(parent)
         self.frame._widgets = []
         self.frame.pack(fill=tk.X)
@@ -17,11 +15,17 @@ class SimpleTable(object):
             for column in range(columns):
                 if column == 0:
 
-                        label = tk.Label(self.frame,
-                                         borderwidth=1, width=6, relief=tk.SUNKEN)
-                        label.grid(row=row, column=column, ipadx=1, ipady=1)
+                    if row == 0:
+                        label = tk.Label(self.frame, fg='black', text="%s/%s" % (row, column),
+                                         borderwidth=1, width=self.first_f_w, relief=tk.RIDGE)
+                        label.grid(row=row, column=column, sticky="nsew", padx=1, pady=1)
+                        label.config(font=("Arial", 9, 'bold'))
 
-                        current_row.append(label)
+                    else:
+
+                        label = tk.Label(self.frame,
+                                         borderwidth=1, width=self.first_f_w, relief=tk.SUNKEN)
+                        label.grid(row=row, column=column, ipadx=1, ipady=1)
 
                 else:
 
@@ -36,7 +40,7 @@ class SimpleTable(object):
                                  borderwidth=1, width=10, relief = tk.SUNKEN)
                         label.grid(row=row, column=column, sticky="nsew", ipadx=1, ipady=1)
 
-                    current_row.append(label)
+                current_row.append(label)
             self.frame._widgets.append(current_row)
 
         for column in range(columns):
