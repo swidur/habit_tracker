@@ -337,7 +337,9 @@ class MainMenu:
 
         m.db_path = tkFileDialog.askopenfilename(initialdir="/", title="Select file",
                                                filetypes=((("db files", "*.db")), )).encode("utf-8")
-        m.db_path = str(m.db_path)
+        if m.db_path == '':
+            m.db_path = 'default.db'
+
 
         short_name = m.db_path.split('/')[-1:][0]
 
