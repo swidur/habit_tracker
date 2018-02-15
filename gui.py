@@ -5,11 +5,10 @@ import tkMessageBox
 import create_db
 import table
 import logging
+import tkFileDialog
 
 logging.basicConfig(filename='debug.log', format='%(asctime)s %(levelname)s: %(message)s',
                     datefmt='/%d-%m-%Y %H:%M:%S/', level=logging.DEBUG)
-
-actv = activities.Activities()
 
 
 def notImplemented():
@@ -78,7 +77,6 @@ class addPopup(object):
         info = 'Add popup: focus on add activity button'
         logging.debug(info)
 
-
     def submit(self, *args):
         # cast entry fields variables into correct types. Display error to status bar.
         try:
@@ -112,7 +110,7 @@ class addPopup(object):
             info = 'Added: {}, {} hrs'.format(self.name, self.duration)
             m.stat.set(info)
             logging.debug(info)
-            actv.add_act(activity.Activity(self.name, self.duration))
+            m.actv.add_act(activity.Activity(self.name, self.duration))
         else:
             info = 'Empty value not permitted. Aborted'
             m.stat.set(info)
@@ -142,7 +140,7 @@ class addPopup(object):
 class viewPopup(object):
     def __init__(self, master):
         top = self.top = Toplevel(master)
-        top.minsize(height=250, width=225)
+        top.minsize(height=50, width=225)
         self.top.geometry("+%d+%d" % (master.winfo_rootx() + 80, master.winfo_rooty() - 20))
         top.resizable(width=False, height=1)
         top.attributes("-toolwindow", 1)
@@ -152,7 +150,11 @@ class viewPopup(object):
         info = "'viewPopup' created"
         logging.debug(info)
 
-        self.inst = showActiv(top)
+        if len(m.actv.get_aggregated()) == 0:
+            l = Label(top, text='Database empty. Add something to display')
+            l.pack()
+        else:
+            self.inst = showActiv(top)
 
         self.f = Frame(top)
         self.f.pack(fill=X)
@@ -185,38 +187,53 @@ class viewPopup(object):
 class delPopup(object):
     def __init__(self, master):
         top = self.top = Toplevel(master)
-        top.minsize(height=250, width=225)
+        top.minsize(height=50, width=225)
         self.top.geometry("+%d+%d" % (master.winfo_rootx() + 80, master.winfo_rooty() - 20))
         top.resizable(width=False, height=1)
         top.attributes("-toolwindow", 1)
         top.title('Delete activity')
         self.top.protocol("WM_DELETE_WINDOW", self.closex)
+        top.bind("<Escape>", self.closeesc)
         top.grab_set()
-
-        self.inst = showDelEntryBox(top)
 
         self.f = Frame(top)
         self.f.pack()
 
+        self.sf = Frame(top)
+        self.sf.pack(side=BOTTOM)
+
+        self.topsf = Frame(self.sf)
+        self.topsf.pack()
+        self.botpsf = Frame(self.sf)
+        self.botpsf.pack()
+
         self.e_val = StringVar()
 
-        self.e = Entry(self.f)
+        self.e = Entry(self.topsf)
         self.e.insert(0, "Enter activity name..")
         self.e.bind("<Button-1>", self.clear_e)
-        self.e.grid(row=0, columnspan=2, pady=5)
+        self.e.bind("<Return>", self.delete)
 
-        self.sf = Frame(top)
-        self.sf.pack()
+        self.add_button = Button(self.botpsf, text='Delete', command=self.delete)
 
-        self.add_button = Button(self.sf, text='Delete', command=self.delete)
-        self.add_button.grid(row=1, column=0, padx=2, pady=7)
+        self.cancel_button = Button(self.botpsf, text='Cancel', command=self.close)
+        self.cancel_button.bind("<Return>", self.close)
 
-        self.cancel_button = Button(self.sf, text='Cancel', command=self.close)
-        self.cancel_button.grid(row=1, column=1)
-        self.cancel_button.bind("<Return>", self.closeesc)
-        self.cancel_button.focus()
+        if len(m.actv.get_aggregated()) == 0:
+            info = 'Database empty. Add something to display.'
+            l = Label(self.topsf, text=info)
+            l.grid(row=0)
+            m.stat.set(info)
+            logging.debug(info)
+            self.cancel_button.grid()
+            self.cancel_button.focus()
 
-        top.bind("<Escape>", self.close)
+        else:
+            self.inst = showDelEntryBox(self.top)
+            self.e.grid(row=0, columnspan=4, pady=5)
+            self.add_button.grid(row=1, column=0, padx=2)
+            self.cancel_button.grid(row=1, column=1)
+            self.cancel_button.focus()
 
     def close(self, *args):
         info = "'Delete activities' closed via 'Cancel' button"
@@ -225,7 +242,7 @@ class delPopup(object):
         self.top.destroy()
 
     def closeesc(self, *args):
-        info = "'Delete activities' closed via esc"
+        info = "'Delete activities' closed via escape"
         m.stat.set(info)
         logging.debug(info)
         self.top.destroy()
@@ -239,18 +256,15 @@ class delPopup(object):
     def delete(self, *args):
         self.e_val = self.e.get()
         if self.e_val != '':
-            actv.del_by_name(self.e_val)
-            info = actv.info
+            self.close()
+            m.actv.del_by_name(self.e_val)
+            info = m.actv.info
             m.stat.set(info)
             logging.debug(info)
-            self.clear_e()
         else:
             info = 'Blank space is not valid activity name'
             m.stat.set(info)
             logging.warning(info)
-        print self.e_val
-        self.close()
-        m.toolbar.del_popup()
 
     def clear_e(self, *args):
         self.e.delete(0, END)
@@ -260,12 +274,15 @@ class delPopup(object):
 
 class mainWindow(object):
     def __init__(self, master):
+        self.db_path = 'default.db'
+        self.actv = activities.Activities('default.db')
+        self.create = create_db.database('default.db')
         self.stat = StringVar()
         root.minsize(height=300, width=300)
         root.geometry('300x300+150+100')
         root.maxsize(height=99999999, width=300)
         self.master = master
-        master.title('Habit Tracker')
+        self.master.title('{} - Habit Tracker'.format(self.db_path))
         master.protocol("WM_DELETE_WINDOW", self.closeX)
 
         info = 'Main window opened'
@@ -282,6 +299,8 @@ class mainWindow(object):
         #  ************** STATUS BAR **************
 
         status = Label(root, textvariable=self.stat, bd=1, relief=SUNKEN, anchor=W)
+        # path = Label(root, textvariable=self.main_menu.db_path, bd=1, relief=SUNKEN, anchor=W)
+        # path.pack(side=BOTTOM, fill=X)
         status.pack(side=BOTTOM, fill=X)
 
 
@@ -310,11 +329,25 @@ class MainMenu:
         self.menu.add_cascade(label='Help', menu=self.help_menu)
         self.help_menu.add_command(label='About..', command=about)
 
+
     def open_db(self, *args):
         info = "'Open' menu called"
         m.stat.set(info)
         logging.debug(info)
-        notImplemented()
+
+        m.db_path = tkFileDialog.askopenfilename(initialdir="/", title="Select file",
+                                               filetypes=((("db files", "*.db")), )).encode("utf-8")
+        m.db_path = str(m.db_path)
+
+        short_name = m.db_path.split('/')[-1:][0]
+
+        info = "Chosen database: '{}'".format(short_name)
+        m.stat.set(info)
+        logging.debug(info)
+
+        m.actv = activities.Activities(m.db_path)
+        m.create = create_db.database(m.db_path)
+        m.master.title('{} - Habit Tracker'.format(short_name))
 
     def close(self, *args):
         info = "Main window closed via menu button 'Close'"
@@ -323,10 +356,9 @@ class MainMenu:
         self.master.destroy()
 
 
-
 class showActiv():
     def __init__(self, master):
-        self.length = len(actv.get_aggregated())
+        self.length = len(m.actv.get_aggregated())
         self.master = master
         self.t = table.SimpleTable(self.master, self.length + 1, 3, 15)
 
@@ -335,14 +367,14 @@ class showActiv():
         self.t.set(0, 2, 'Count')
 
         for i in range(self.length):
-            self.t.set(i + 1, 0, actv.get_aggregated()[i][0])
-            self.t.set(i + 1, 1, actv.get_aggregated()[i][1])
-            self.t.set(i + 1, 2, actv.get_aggregated()[i][2])
+            self.t.set(i + 1, 0, m.actv.get_aggregated()[i][0])
+            self.t.set(i + 1, 1, m.actv.get_aggregated()[i][1])
+            self.t.set(i + 1, 2, m.actv.get_aggregated()[i][2])
 
 
 # class showDelCheckbox():
 #     def __init__(self, master):
-#         self.length = len(actv.get_aggregated())
+#         self.length = len(m.actv.get_aggregated())
 #         self.master = master
 #         self.t = table.SimpleTable(self.master, self.length + 1, 4, 6)
 #
@@ -352,15 +384,15 @@ class showActiv():
 #         self.t.set(0, 3, 'Count')
 #
 #         for i in range(self.length):
-#             self.t.set(i + 1, 1, actv.get_aggregated()[i][0])
-#             self.t.set(i + 1, 2, actv.get_aggregated()[i][1])
-#             self.t.set(i + 1, 3, actv.get_aggregated()[i][2])
+#             self.t.set(i + 1, 1, m.actv.get_aggregated()[i][0])
+#             self.t.set(i + 1, 2, m.actv.get_aggregated()[i][1])
+#             self.t.set(i + 1, 3, m.actv.get_aggregated()[i][2])
 #             self.t.set(i + 1, 0, Checkbutton(self.t.frame, pady=0, padx=0, borderwidth=0, command = notImplemented).grid(row=i + 1, column=0))
 
 
 class showDelEntryBox():
     def __init__(self, master):
-        self.length = len(actv.get_aggregated())
+        self.length = len(m.actv.get_aggregated())
         self.master = master
         self.t = table.SimpleTable(self.master, self.length + 1, 3, 15)
 
@@ -369,9 +401,9 @@ class showDelEntryBox():
         self.t.set(0, 2, 'Count')
 
         for i in range(self.length):
-            self.t.set(i + 1, 0, actv.get_aggregated()[i][0])
-            self.t.set(i + 1, 1, actv.get_aggregated()[i][1])
-            self.t.set(i + 1, 2, actv.get_aggregated()[i][2])
+            self.t.set(i + 1, 0, m.actv.get_aggregated()[i][0])
+            self.t.set(i + 1, 1, m.actv.get_aggregated()[i][1])
+            self.t.set(i + 1, 2, m.actv.get_aggregated()[i][2])
 
 
 class Toolbar:

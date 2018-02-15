@@ -2,8 +2,9 @@ from connector import Connector
 
 
 class Activities:
-    def __init__(self):
-        self.connection = Connector.connect()
+    def __init__(self, path):
+        self.c = Connector(path)
+        self.connection = self.c.connect()
 
         self.info = 'Nothing to report'
 

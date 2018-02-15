@@ -2,10 +2,9 @@ import sqlite3 as lite
 
 
 class Connector:
-    def __init__(self):
-        pass
+    def __init__(self, path):
+        self.path = path
 
-    @staticmethod
-    def connect():
+    def connect(self):
         """Connect to the SQLite database. Returns a database connection."""
-        return lite.connect('local.db')
+        return lite.connect(self.path)

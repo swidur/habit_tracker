@@ -1,13 +1,16 @@
 import sqlite3 as lite
-
-con = None
-try:
-    con = lite.connect('local.db')
-    cur = con.cursor()
-    cur.execute(
-        'CREATE TABLE IF NOT EXISTS loger (act TEXT NOT NULL, duration INTEGER NOT NULL,date DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,act_id INTEGER PRIMARY KEY);')
+from connector import Connector
 
 
-except lite.Error, e:
+def database(path):
+    try:
+        c = Connector(path)
+        con = lite.connect(c.path)
+        cur = con.cursor()
+        cur.execute(
+            'CREATE TABLE IF NOT EXISTS loger (act TEXT NOT NULL, duration INTEGER NOT NULL,date DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,act_id INTEGER PRIMARY KEY);')
 
-    print "Error %s:" % e.args[0]
+
+    except lite.Error, e:
+
+        print "Error %s:" % e.args[0]
