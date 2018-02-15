@@ -1,3 +1,5 @@
+# !/usr/bin/env python
+# coding: utf8
 from Tkinter import *
 import activities
 import activity
@@ -303,7 +305,6 @@ class mainWindow(object):
         # path.pack(side=BOTTOM, fill=X)
         status.pack(side=BOTTOM, fill=X)
 
-
     def closeX(self):
         self.master.destroy()
         info = 'Main window closed via X button'
@@ -319,6 +320,7 @@ class MainMenu:
         self.file_menu = Menu(self.menu, tearoff=0)
         self.menu.add_cascade(label='File', menu=self.file_menu)
 
+        self.file_menu.add_command(label='Create..', command=self.create_db)
         self.file_menu.add_command(label='Open..', command=self.open_db)
 
         self.file_menu.add_separator()
@@ -329,17 +331,15 @@ class MainMenu:
         self.menu.add_cascade(label='Help', menu=self.help_menu)
         self.help_menu.add_command(label='About..', command=about)
 
-
     def open_db(self, *args):
         info = "'Open' menu called"
         m.stat.set(info)
         logging.debug(info)
 
         m.db_path = tkFileDialog.askopenfilename(initialdir="/", title="Select file",
-                                               filetypes=((("db files", "*.db")), )).encode("utf-8")
+                                                 filetypes=((("db files", "*.db")),)).encode("utf-8")
         if m.db_path == '':
             m.db_path = 'default.db'
-
 
         short_name = m.db_path.split('/')[-1:][0]
 
@@ -350,6 +350,21 @@ class MainMenu:
         m.actv = activities.Activities(m.db_path)
         m.create = create_db.database(m.db_path)
         m.master.title('{} - Habit Tracker'.format(short_name))
+
+    def create_db(self):
+        info = "'Create database' menu called"
+        m.stat.set(info)
+        logging.debug(info)
+
+        name = tkFileDialog.asksaveasfile(initialdir="/", title="Select file",
+                                          filetypes=((("db files", "*.db")),), defaultextension='.db')
+
+
+        short_name = name.name.split('/')[-1:][0].encode("utf-8")
+
+        info = "Created new database: {}".format(short_name)
+        m.stat.set(info)
+        logging.debug('{} at {}'.format(info, name.name.encode("utf-8")))
 
     def close(self, *args):
         info = "Main window closed via menu button 'Close'"
