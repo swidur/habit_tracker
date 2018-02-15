@@ -19,6 +19,16 @@ def notImplemented():
     logging.warning(info)
 
 
+def write_current_db(path):
+    with open('current.txt', 'a+') as f:
+        f.write('{}\n'.format(path))
+
+
+def read_lastline():
+    with open('current.txt', 'r') as f:
+        return f.readlines()[-1]
+
+
 def about():
     tkMessageBox.showinfo('About.. ', 'Habit Tracker v0.1\n\nDawid Swidurski\ngithub.com/swidur')
     info = 'About displayed'
@@ -276,9 +286,18 @@ class delPopup(object):
 
 class mainWindow(object):
     def __init__(self, master):
+
         self.db_path = 'default.db'
-        self.actv = activities.Activities('default.db')
-        self.create = create_db.database('default.db')
+
+        try:
+            read_lastline()
+        except IndexError:
+            self.db_path = 'default.db'
+        else:
+            self.db_path = read_lastline().strip('\n')
+        #
+        self.actv = activities.Activities(self.db_path)
+        self.create = create_db.database(self.db_path)
         self.stat = StringVar()
         root.minsize(height=300, width=300)
         root.geometry('300x300+150+100')
@@ -351,6 +370,8 @@ class MainMenu:
         m.create = create_db.database(m.db_path)
         m.master.title('{} - Habit Tracker'.format(short_name))
 
+        write_current_db(m.db_path)
+
     def create_db(self):
         info = "'Create database' menu called"
         m.stat.set(info)
@@ -358,7 +379,6 @@ class MainMenu:
 
         name = tkFileDialog.asksaveasfile(initialdir="/", title="Select file",
                                           filetypes=((("db files", "*.db")),), defaultextension='.db')
-
 
         short_name = name.name.split('/')[-1:][0].encode("utf-8")
 
