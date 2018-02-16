@@ -22,11 +22,19 @@ def notImplemented():
 def write_current_db(path):
     with open('current.txt', 'a+') as f:
         f.write('{}\n'.format(path))
+        info = "Accessing or creating 'current.txt'"
+        logging.warning(info)
 
 
 def read_lastline():
-    with open('current.txt', 'r') as f:
-        return f.readlines()[-1]
+    try:
+        with open('current.txt', 'r+') as f:
+            return f.readlines()[-1]
+
+    except IOError as io:
+        info = '{} - creating file..'.format(io)
+        logging.warning(info)
+        write_current_db('default.db')
 
 
 def about():
@@ -163,7 +171,7 @@ class viewPopup(object):
         logging.debug(info)
 
         if len(m.actv.get_aggregated()) == 0:
-            l = Label(top, text='Database empty. Add something to display')
+            l = Label(top, text='Database empty. You can add activities via "Add" button.')
             l.pack()
         else:
             self.inst = showActiv(top)
@@ -232,7 +240,7 @@ class delPopup(object):
         self.cancel_button.bind("<Return>", self.close)
 
         if len(m.actv.get_aggregated()) == 0:
-            info = 'Database empty. Add something to display.'
+            info = 'Database empty. You can add activities via "Add" button..'
             l = Label(self.topsf, text=info)
             l.grid(row=0)
             m.stat.set(info)
@@ -294,16 +302,20 @@ class mainWindow(object):
         except IndexError:
             self.db_path = 'default.db'
         else:
-            self.db_path = read_lastline().strip('\n')
-        #
+            if self.db_path != ('' or ' ' or '\n'):
+                self.db_path = read_lastline().strip('\n')
+            else:
+                self.db_path = 'default.db'
+
         self.actv = activities.Activities(self.db_path)
         self.create = create_db.database(self.db_path)
+
         self.stat = StringVar()
-        root.minsize(height=300, width=300)
-        root.geometry('300x300+150+100')
+        root.minsize(height=150, width=300)
+        root.geometry('300x150+150+100')
         root.maxsize(height=99999999, width=300)
         self.master = master
-        self.master.title('{} - Habit Tracker'.format(self.db_path))
+        self.master.title('{} - Habit Tracker'.format(self.db_path.split('/')[-1:][0]))
         master.protocol("WM_DELETE_WINDOW", self.closeX)
 
         info = 'Main window opened'
@@ -357,10 +369,27 @@ class MainMenu:
 
         m.db_path = tkFileDialog.askopenfilename(initialdir="/", title="Select file",
                                                  filetypes=((("db files", "*.db")),)).encode("utf-8")
-        if m.db_path == '':
-            m.db_path = 'default.db'
 
-        short_name = m.db_path.split('/')[-1:][0]
+        if m.db_path == '':
+            try:
+                read_lastline()
+                short_name = m.db_path.split('/')[-1:][0]
+            except IndexError:
+                m.db_path = 'default.db'
+                short_name = m.db_path
+                info = "No database selected in FileDialog, none found in current.txt. Chosen database: '{}'".format(
+                    short_name)
+                m.stat.set("None selected, using last known '{}'".format(short_name))
+                logging.warning(info)
+
+            else:
+                m.db_path = read_lastline().strip('\n')
+                short_name = m.db_path.split('/')[-1:][0]
+                info = "None selected, using last known '{}'".format(short_name)
+                m.stat.set(info)
+                logging.debug(info)
+        else:
+            short_name = m.db_path.split('/')[-1:][0]
 
         info = "Chosen database: '{}'".format(short_name)
         m.stat.set(info)
@@ -380,11 +409,16 @@ class MainMenu:
         name = tkFileDialog.asksaveasfile(initialdir="/", title="Select file",
                                           filetypes=((("db files", "*.db")),), defaultextension='.db')
 
-        short_name = name.name.split('/')[-1:][0].encode("utf-8")
+        if name != None:
+            short_name = name.name.split('/')[-1:][0].encode("utf-8")
 
-        info = "Created new database: {}".format(short_name)
-        m.stat.set(info)
-        logging.debug('{} at {}'.format(info, name.name.encode("utf-8")))
+            info = "Created new database: {}".format(short_name)
+            m.stat.set(info)
+            logging.info('{} at {}'.format(info, name.name.encode("utf-8")))
+        else:
+            info = "Closed 'Create database' without action"
+            m.stat.set(info)
+            logging.debug(info)
 
     def close(self, *args):
         info = "Main window closed via menu button 'Close'"
