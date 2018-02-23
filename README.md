@@ -1,8 +1,9 @@
 # habit_tracker
-Simple (functioning!) programm for keeping track of activities aka habits. 
-Uses local postgreSQL [or SQLite in sqlite branch] database for record keeping.
+Simple programm for keeping track of activities aka habits. 
+Uses local SQLite database for record keeping.
 To do:
-- rewrite using OOP (DONE)
-- Tkinter GUI
+- rewrite using OOP		(DONE)
+- switch to SQLite		(DONE)
+- Tkinter GUI			(DONE)
 - sorting by date
 - ???
