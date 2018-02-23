@@ -20,7 +20,7 @@ class Activities:
         """Returns a list of distinct activities, summed up duration and entries count"""
         db = self.connection
         c = db.cursor()
-        c.execute("select act, sum(duration) as sum, count(act) from loger group by act order by sum desc, act asc;")
+        c.execute("select act, round(sum(duration),2) as sum, count(act) from loger group by act order by sum desc, act asc;")
 
         rows = c.fetchall()
         return rows
@@ -29,6 +29,7 @@ class Activities:
         """add new activity"""
         db = self.connection
         c = db.cursor()
+
         c.execute(
             "insert into loger values ('{0}',{1},current_timestamp,NULL);".format(Activity.act, Activity.duration))
         db.commit()
